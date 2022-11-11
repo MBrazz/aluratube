@@ -5,9 +5,34 @@ import styled from "styled-components"
 import Menu from "../src/components/Menu"
 
 import { StyledTimeline } from "../src/components/Timeline"
+import { videoService } from "../src/services/videoService"
 
 function HomePage() {
+  const service = videoService()
+  service.getAllVideos()
   const [valorDoFiltro, setValorDoFiltro] = React.useState("")
+  const [playlists, setPlaylists] = React.useState({})
+
+  React.useEffect(() => {
+    console.log("useEffect")
+    service.getAllVideos().then((dados) => {
+      console.log(dados.data)
+
+      // Forma imutavel
+      const novasPlaylists = { ...playlists }
+      dados.data.forEach((video) => {
+        if (!novasPlaylists[video.playlist]) novasPlaylists[video.playlist] = []
+        // novasPlaylists[video.playlist].push(video)
+        novasPlaylists[video.playlist] = [
+          video,
+          ...novasPlaylists[video.playlist],
+        ]
+      })
+      setPlaylists(novasPlaylists)
+    })
+  }, [])
+
+  console.log("Playlists Pronto", playlists)
 
   return (
     <>
@@ -25,7 +50,7 @@ function HomePage() {
           setValorDoFiltro={setValorDoFiltro}
         />
         <Header />
-        <TimeLine searchValue={valorDoFiltro} playlists={config.playlists} />
+        <TimeLine searchValue={valorDoFiltro} playlists={playlists} />
       </div>
     </>
   )
@@ -52,7 +77,7 @@ const StyledHeader = styled.div`
     padding: 16px 32px;
     gap: 16px;
   }
-`;
+`
 
 const StyledBanner = styled.div`
   /* background-image: url(${config.bg}); */
@@ -63,7 +88,7 @@ const StyledBanner = styled.div`
 function Header() {
   return (
     <StyledHeader>
-      <StyledBanner bg={config.bg}/>
+      <StyledBanner bg={config.bg} />
       <section className="user-info">
         <img src={`https://github.com/${config.github}.png`} />
         <div>
@@ -75,7 +100,7 @@ function Header() {
   )
 }
 
-function TimeLine({searchValue, ...props}) {
+function TimeLine({ searchValue, ...props }) {
   // console.log("Dentro do componente", props.playlists)
   const playlistNames = Object.keys(props.playlists)
   // Statement
@@ -88,18 +113,20 @@ function TimeLine({searchValue, ...props}) {
           <section key={playlistName}>
             <h2>{playlistName}</h2>
             <div>
-              {videos.filter((video) => {
-              const titleNormalized = video.title.toLowerCase();
-              const searchValueNormalized = searchValue.toLowerCase()
-                return titleNormalized.includes(searchValueNormalized)
-              }).map((video) => {
-                return (
-                  <a key={video.url} href={video.url}>
-                    <img src={video.thumb} />
-                    <span>{video.title}</span>
-                  </a>
-                )
-              })}
+              {videos
+                .filter((video) => {
+                  const titleNormalized = video.title.toLowerCase()
+                  const searchValueNormalized = searchValue.toLowerCase()
+                  return titleNormalized.includes(searchValueNormalized)
+                })
+                .map((video) => {
+                  return (
+                    <a key={video.url} href={video.url}>
+                      <img src={video.thumb} />
+                      <span>{video.title}</span>
+                    </a>
+                  )
+                })}
             </div>
           </section>
         )
